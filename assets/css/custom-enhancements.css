@@ -1,0 +1,643 @@
+/* =========================================================================
+   Princess of Forex — Custom Enhancements
+   =========================================================================
+   This stylesheet layers on top of the original Elementor export
+   (theme.css / frontend.min.css / widget-*.min.css) — it does not replace
+   those files. It is loaded LAST in <head>, so its rules win over the
+   Elementor defaults for anything it targets.
+
+   Contents:
+     0. Design tokens        — colors, spacing, radius, font stacks
+     1. Page canvas          — dark background + texture
+     2. Market ticker        — the scrolling rate ribbon under the header
+     3. Contrast fixes       — re-colors sections that assumed a white page
+     4. HFM broker banner    — the referral CTA banner
+     5. Scroll reveal        — fade-in-on-scroll utility class
+     6. Hover polish         — buttons, cards, icons, social links
+     7. Mobile / device fixes
+     8. Meet the Founder     — investor bio section
+     9. Testimonial carousel — the auto-playing client quotes section
+
+   Naming convention: every custom class is prefixed "pof-" (Princess Of
+   Forex) so it's immediately obvious which classes are ours vs. the
+   original Elementor export.
+   ========================================================================= */
+
+:root{
+  /* --- Brand colors ------------------------------------------------- */
+  --pof-canvas:        #0a0a0d;  /* main page background (near-black) */
+  --pof-canvas-deep:   #050506;  /* darkest edge of the canvas gradient */
+  --pof-panel:         #14141a;  /* raised "card" surfaces on the dark canvas */
+  --pof-panel-line:    rgba(212,175,55,0.22); /* hairline borders on dark cards */
+  --pof-gold:          #d4af37;  /* primary brand accent (matches the logo) */
+  --pof-gold-soft:     #eecd76;  /* lighter gold for hover states */
+  --pof-ivory:         #f4efe2;  /* primary text color on dark backgrounds */
+  --pof-ivory-dim:     rgba(244,239,226,0.72); /* secondary/muted text on dark */
+  --pof-green:         #22c37b;  /* "price up" / positive indicator */
+  --pof-red:           #e5484d;  /* "price down" / negative indicator */
+  --pof-mono:          ui-monospace, "SF Mono", Menlo, Consolas, "Roboto Mono", monospace;
+
+  /* --- Spacing scale (8px base grid) --------------------------------
+     Use these instead of ad-hoc pixel values so vertical rhythm stays
+     consistent across every custom section. */
+  --pof-space-1: 8px;
+  --pof-space-2: 16px;
+  --pof-space-3: 24px;
+  --pof-space-4: 32px;
+  --pof-space-5: 48px;
+  --pof-space-6: 64px;
+  --pof-space-7: 96px;
+
+  /* --- Corner radius scale -------------------------------------------
+     3 sizes cover every custom component: small controls, cards/panels,
+     and fully-rounded pill buttons. Keeping it to 3 values (rather than
+     the 14/16/18px mix that crept in during earlier passes) is what
+     makes the page read as "designed" rather than assembled piecemeal. */
+  --pof-radius-sm:   10px;  /* nav arrows, dots, small controls */
+  --pof-radius-md:   16px;  /* cards, panels, image frames */
+  --pof-radius-pill: 999px; /* every clickable CTA button, site-wide */
+}
+
+/* -------------------------------------------------------------------------
+   1. Page canvas — dark gradient + faint candlestick / grid texture.
+   Sections that already declare their own background (pricing cards,
+   the hero gradient, the black "Get in Touch" panel, etc.) simply sit on
+   top of this and are untouched, so their contrast is unaffected.
+------------------------------------------------------------------------- */
+body.elementor-kit-4{
+  background-color: var(--pof-canvas);
+  background-image:
+    radial-gradient(ellipse 900px 500px at 50% -10%, rgba(212,175,55,0.16), transparent 60%),
+    radial-gradient(ellipse 700px 500px at 100% 20%, rgba(212,175,55,0.06), transparent 55%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Cg fill='none' stroke='%23D4AF37' stroke-opacity='0.05' stroke-width='1'%3E%3Cpath d='M0 60h120M60 0v120'/%3E%3C/g%3E%3Cg stroke='%23D4AF37' stroke-opacity='0.09' stroke-width='2'%3E%3Cline x1='18' y1='30' x2='18' y2='70'/%3E%3Crect x='14' y='42' width='8' height='18' fill='%23D4AF37' fill-opacity='0.07' stroke='none'/%3E%3Cline x1='46' y1='18' x2='46' y2='58'/%3E%3Crect x='42' y='24' width='8' height='22' fill='%23D4AF37' fill-opacity='0.07' stroke='none'/%3E%3Cline x1='74' y1='40' x2='74' y2='94'/%3E%3Crect x='70' y='60' width='8' height='24' fill='%23D4AF37' fill-opacity='0.07' stroke='none'/%3E%3Cline x1='102' y1='24' x2='102' y2='76'/%3E%3Crect x='98' y='30' width='8' height='20' fill='%23D4AF37' fill-opacity='0.07' stroke='none'/%3E%3C/g%3E%3C/svg%3E"),
+    linear-gradient(180deg, var(--pof-canvas-deep) 0%, var(--pof-canvas) 6%, var(--pof-canvas) 94%, var(--pof-canvas-deep) 100%);
+  background-repeat: no-repeat, no-repeat, repeat, no-repeat;
+  background-attachment: fixed, fixed, fixed, fixed;
+  background-size: auto, auto, 120px 120px, 100% 100%;
+}
+
+/* =========================================================================
+   2. Live market ticker ribbon
+   ========================================================================= */
+.pof-ticker{
+  position: relative;
+  z-index: 20;
+  background: linear-gradient(180deg, #111114 0%, #0a0a0c 100%);
+  border-bottom: 1px solid var(--pof-panel-line);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  height: 42px;
+}
+.pof-ticker__badge{
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 16px;
+  height: 100%;
+  background: var(--pof-canvas-deep);
+  border-right: 1px solid var(--pof-panel-line);
+  font-family: var(--pof-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--pof-gold-soft);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.pof-ticker__dot{
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--pof-green);
+  box-shadow: 0 0 6px var(--pof-green);
+  animation: pof-pulse 1.6s ease-in-out infinite;
+}
+@keyframes pof-pulse{
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.45; transform: scale(0.8); }
+}
+.pof-ticker__track{
+  flex: 1 1 auto;
+  overflow: hidden;
+  height: 100%;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 24px, #000 calc(100% - 24px), transparent);
+          mask-image: linear-gradient(90deg, transparent, #000 24px, #000 calc(100% - 24px), transparent);
+}
+.pof-ticker__scroll{
+  display: flex;
+  align-items: center;
+  width: max-content;
+  height: 100%;
+  animation: pof-scroll 38s linear infinite;
+}
+.pof-ticker__track:hover .pof-ticker__scroll{
+  animation-play-state: paused;
+}
+@keyframes pof-scroll{
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+.pof-ticker__item{
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 0 22px;
+  white-space: nowrap;
+  font-family: var(--pof-mono);
+  font-size: 12.5px;
+  border-right: 1px solid rgba(212,175,55,0.14);
+}
+.pof-ticker__pair{
+  color: var(--pof-ivory);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.pof-ticker__price{
+  color: var(--pof-gold-soft);
+  min-width: 6.5ch;
+  display: inline-block;
+  text-align: right;
+  transition: color 0.25s ease;
+}
+.pof-ticker__delta{
+  font-size: 11px;
+  min-width: 4.5ch;
+}
+.pof-ticker__delta.up{ color: var(--pof-green); }
+.pof-ticker__delta.down{ color: var(--pof-red); }
+.pof-ticker__price.flash-up{ color: var(--pof-green); }
+.pof-ticker__price.flash-down{ color: var(--pof-red); }
+
+@media (max-width: 767px){
+  .pof-ticker__badge span.pof-ticker__label{ display:none; }
+  .pof-ticker__item{ padding: 0 16px; font-size: 11.5px; }
+}
+
+/* =========================================================================
+   3. Contrast fixes — sections that previously assumed a white canvas
+   ========================================================================= */
+
+/* "Why Choose Princess of Forex" copy column */
+.elementor-9 .elementor-element.elementor-element-536f734 .elementor-heading-title{ color: var(--pof-gold) !important; }
+.elementor-9 .elementor-element.elementor-element-f129dff,
+.elementor-9 .elementor-element.elementor-element-f129dff *{ color: var(--pof-ivory-dim) !important; }
+
+/* CEO manifesto quote — give it a proper card so it reads as a signature moment */
+.elementor-9 .elementor-element.elementor-element-50182e0 .elementor-testimonial{
+  background: var(--pof-panel);
+  border: 1px solid var(--pof-panel-line);
+  border-radius: var(--pof-radius-md);
+  padding: var(--pof-space-5) clamp(20px, 5vw, 56px);
+}
+.elementor-9 .elementor-element.elementor-element-50182e0 .elementor-testimonial__text{
+  color: var(--pof-ivory) !important;
+  font-style: italic;
+}
+.elementor-9 .elementor-element.elementor-element-50182e0 .elementor-testimonial__name{ color: var(--pof-gold) !important; }
+.elementor-9 .elementor-element.elementor-element-50182e0 .elementor-testimonial__title{ color: var(--pof-ivory-dim) !important; }
+
+/* SERVICES section marker */
+h1.e-heading-base{
+  color: var(--pof-gold) !important;
+  letter-spacing: 0.18em;
+  font-size: 15px !important;
+  position: relative;
+  display: inline-block;
+  padding-bottom: 10px;
+}
+h1.e-heading-base::after{
+  content: "";
+  position: absolute;
+  left: 0; bottom: 0;
+  width: 42px; height: 2px;
+  background: var(--pof-gold);
+}
+
+/* "What Our Clients Say" heading + carousel */
+.elementor-9 .elementor-element.elementor-element-d953af7 .elementor-heading-title{ color: var(--pof-gold) !important; }
+.elementor-9 .elementor-element.elementor-element-78c2bfd .elementor-testimonial__text{ color: var(--pof-ivory) !important; }
+.elementor-9 .elementor-element.elementor-element-78c2bfd .elementor-testimonial__name{ color: var(--pof-gold-soft) !important; }
+.elementor-9 .elementor-element.elementor-element-78c2bfd .elementor-testimonial__title{ color: var(--pof-ivory-dim) !important; }
+.elementor-9 .elementor-element.elementor-element-78c2bfd .elementor-swiper-button,
+.elementor-9 .elementor-element.elementor-element-78c2bfd .elementor-swiper-button svg{ color: var(--pof-gold) !important; fill: var(--pof-gold) !important; }
+
+/* Animated headline banners ("CLICK HERE..." / "VISIT OUR SOCIAL MEDIA...") */
+.elementor-9 .elementor-element.elementor-element-1c11393 .elementor-headline-plain-text,
+.elementor-9 .elementor-element.elementor-element-80d1654 .elementor-headline-plain-text{ color: var(--pof-ivory) !important; }
+.elementor-9 .elementor-element.elementor-element-1c11393 .elementor-headline-dynamic-text{ color: var(--pof-gold) !important; }
+
+/* Social icons row under "VISIT OUR SOCIAL MEDIA" */
+.elementor-9 .elementor-element.elementor-element-0d1aeee .elementor-social-icon,
+.elementor-9 .elementor-element.elementor-element-0d1aeee .elementor-social-icon svg{
+  color: var(--pof-gold) !important;
+  fill: var(--pof-gold) !important;
+}
+.elementor-9 .elementor-element.elementor-element-0d1aeee .elementor-social-icon:hover,
+.elementor-9 .elementor-element.elementor-element-0d1aeee .elementor-social-icon:hover svg{
+  color: var(--pof-gold-soft) !important;
+  fill: var(--pof-gold-soft) !important;
+}
+
+/* "Get in Touch" heading block (outside the black panel) */
+.elementor-9 .elementor-element.elementor-element-2dd1dd6 .elementor-heading-title{ color: var(--pof-gold-soft) !important; }
+.elementor-9 .elementor-element.elementor-element-9f1fc2b .elementor-heading-title{ color: var(--pof-ivory) !important; }
+.elementor-9 .elementor-element.elementor-element-fa7137f,
+.elementor-9 .elementor-element.elementor-element-fa7137f *{ color: var(--pof-ivory-dim) !important; }
+
+/* Contact icon boxes (Email / Call / Visit) */
+.elementor-9 .elementor-element.elementor-element-7e26373 .elementor-icon-box-title,
+.elementor-9 .elementor-element.elementor-element-c80149e .elementor-icon-box-title,
+.elementor-9 .elementor-element.elementor-element-cf7b872 .elementor-icon-box-title{ color: var(--pof-gold-soft) !important; }
+.elementor-9 .elementor-element.elementor-element-7e26373 .elementor-icon-box-description,
+.elementor-9 .elementor-element.elementor-element-c80149e .elementor-icon-box-description,
+.elementor-9 .elementor-element.elementor-element-cf7b872 .elementor-icon-box-description{ color: var(--pof-ivory-dim) !important; }
+.elementor-9 .elementor-element.elementor-element-7e26373 .elementor-icon,
+.elementor-9 .elementor-element.elementor-element-c80149e .elementor-icon,
+.elementor-9 .elementor-element.elementor-element-cf7b872 .elementor-icon{
+  color: var(--pof-gold) !important;
+  border-color: var(--pof-gold) !important;
+}
+.elementor-9 .elementor-element.elementor-element-7e26373.elementor-view-stacked .elementor-icon,
+.elementor-9 .elementor-element.elementor-element-c80149e.elementor-view-stacked .elementor-icon,
+.elementor-9 .elementor-element.elementor-element-cf7b872.elementor-view-stacked .elementor-icon{
+  background-color: var(--pof-gold) !important;
+  color: var(--pof-canvas) !important;
+}
+
+/* Map: frame it so a bright white embed doesn't look like a stray rectangle */
+.elementor-9 .elementor-element.elementor-element-53712ac .elementor-custom-embed{
+  border: 1px solid var(--pof-panel-line);
+  border-radius: var(--pof-radius-md);
+  overflow: hidden;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.45);
+}
+
+/* Risk disclaimer paragraph */
+p.pof-disclaimer{ color: var(--pof-ivory-dim) !important; }
+p.pof-disclaimer strong{ color: var(--pof-gold-soft) !important; }
+
+/* Footer */
+.elementor-12 .elementor-element.elementor-element-17e5976 .elementor-social-icon,
+.elementor-12 .elementor-element.elementor-element-17e5976 .elementor-social-icon svg{
+  color: var(--pof-gold) !important;
+  fill: var(--pof-gold) !important;
+}
+.elementor-12 .elementor-element.elementor-element-17e5976 .elementor-social-icon:hover,
+.elementor-12 .elementor-element.elementor-element-17e5976 .elementor-social-icon:hover svg{
+  color: var(--pof-gold-soft) !important;
+  fill: var(--pof-gold-soft) !important;
+}
+footer.elementor-location-footer{
+  border-top: 1px solid var(--pof-panel-line);
+}
+
+/* =========================================================================
+   5. HFM broker banner — real local content, clearly clickable
+   ========================================================================= */
+.pof-broker-banner{
+  display: block;
+  position: relative;
+  max-width: 1140px;
+  margin: 0 auto;
+  border-radius: var(--pof-radius-md);
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse 520px 320px at 12% 20%, rgba(212,175,55,0.22), transparent 60%),
+    linear-gradient(135deg, #17140a 0%, #0a0a0d 60%);
+  border: 1px solid var(--pof-panel-line);
+  text-decoration: none;
+}
+.pof-broker-banner__inner{
+  padding: clamp(36px, 6vw, 64px) clamp(24px, 6vw, 64px);
+  text-align: center;
+  max-width: 720px;
+  margin: 0 auto;
+}
+.pof-broker-banner__eyebrow{
+  font-family: var(--pof-mono);
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--pof-gold);
+  margin: 0 0 14px 0;
+}
+.pof-broker-banner__title{
+  font-family: "Poppins", sans-serif;
+  font-size: clamp(22px, 3vw, 32px);
+  font-weight: 600;
+  color: var(--pof-ivory);
+  margin: 0 0 12px 0;
+  line-height: 1.3;
+}
+.pof-broker-banner__text{
+  font-family: "Figtree", sans-serif;
+  font-size: 15px;
+  color: var(--pof-ivory-dim);
+  margin: 0 0 28px 0;
+  line-height: 1.6;
+}
+.pof-broker-banner__button{
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--pof-gold);
+  color: #0a0a0d;
+  font-family: "Poppins", sans-serif;
+  font-weight: 600;
+  font-size: 15px;
+  padding: var(--pof-space-2) var(--pof-space-4);
+  border-radius: var(--pof-radius-pill);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+.pof-broker-banner__button svg{ transition: transform 0.2s ease; }
+.pof-broker-banner:hover .pof-broker-banner__button,
+.pof-broker-banner:focus-visible .pof-broker-banner__button{
+  background: var(--pof-gold-soft);
+  box-shadow: 0 10px 28px rgba(212,175,55,0.35);
+  transform: translateY(-2px);
+}
+.pof-broker-banner:hover .pof-broker-banner__button svg{ transform: translateX(3px); }
+.pof-broker-banner:focus-visible{ outline: 2px solid var(--pof-gold); outline-offset: 4px; }
+
+@media (max-width: 600px){
+  .pof-broker-banner{ border-radius: 0; margin-left: -16px; margin-right: -16px; max-width: none; }
+}
+
+/* =========================================================================
+   6. Scroll reveal + hover polish
+   ========================================================================= */
+.pof-reveal{
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+.pof-reveal.pof-in-view{
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Buttons: consistent lift + gold glow on hover across the site.
+   The original Elementor export used a near-square 3px radius on buttons,
+   while every custom component we've added uses a fully-rounded pill.
+   Unifying both to the pill radius here is what makes "Join Now", the
+   pricing card buttons, and the HFM banner button read as one consistent
+   button style instead of two different design languages on one page. */
+.elementor-button,
+.elementor-price-table__button{
+  border-radius: var(--pof-radius-pill) !important;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease !important;
+}
+.elementor-button:hover,
+.elementor-price-table__button:hover{
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(212,175,55,0.28);
+  filter: brightness(1.06);
+}
+
+/* Pricing cards: lift on hover so they feel tactile */
+.elementor-widget-price-table{
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+.elementor-widget-price-table:hover{
+  transform: translateY(-6px);
+  box-shadow: 0 24px 48px rgba(0,0,0,0.35);
+}
+
+/* Testimonial avatar ring */
+.elementor-testimonial__image img{
+  border: 2px solid var(--pof-gold);
+  border-radius: 50%;
+}
+
+/* Social icons: gentle scale on hover */
+.elementor-social-icon{
+  transition: transform 0.2s ease !important;
+}
+.elementor-social-icon:hover{
+  transform: translateY(-3px) scale(1.08);
+}
+
+/* Icon boxes (Email/Call/Visit): lift on hover */
+.elementor-widget-icon-box{
+  transition: transform 0.25s ease;
+}
+.elementor-widget-icon-box:hover{
+  transform: translateY(-4px);
+}
+
+/* Accessible focus states throughout */
+a:focus-visible,
+button:focus-visible{
+  outline: 2px solid var(--pof-gold);
+  outline-offset: 3px;
+}
+
+/* =========================================================================
+   7. Mobile / cross-device fixes
+   ========================================================================= */
+
+/* Fixed backgrounds are unreliable and janky on iOS Safari / Android Chrome
+   (repaint on every scroll frame, or fail to cover the viewport when the
+   address bar collapses). Switch to normal scrolling backgrounds on
+   touch-sized viewports — the gradient and pattern still render, they just
+   scroll with the page instead of staying pinned. */
+@media (max-width: 900px){
+  body.elementor-kit-4{
+    background-attachment: scroll, scroll, scroll, scroll;
+  }
+}
+
+/* Prevent any accidental horizontal scroll from full-bleed elements */
+html, body{ overflow-x: hidden; max-width: 100%; }
+
+/* Founder + broker banner: tighter spacing and full-bleed feel on phones */
+@media (max-width: 480px){
+  .pof-founder{ padding: 56px 20px; }
+  .pof-founder__body h2{ font-size: 24px; }
+  .pof-ticker__item{ padding: 0 14px; font-size: 11px; }
+  .pof-broker-banner__title{ font-size: 20px; }
+}
+
+.pof-founder{
+  position: relative;
+  max-width: 1140px;
+  margin: 0 auto;
+  padding: 90px 24px;
+  display: grid;
+  grid-template-columns: minmax(240px, 360px) 1fr;
+  gap: 56px;
+  align-items: center;
+}
+.pof-founder__portrait{
+  position: relative;
+  border-radius: var(--pof-radius-md);
+  overflow: hidden;
+  border: 1px solid var(--pof-panel-line);
+  box-shadow: 0 30px 60px rgba(0,0,0,0.5);
+  aspect-ratio: 4 / 5;
+}
+.pof-founder__portrait img{
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.pof-founder__eyebrow{
+  font-family: var(--pof-mono);
+  font-size: 12px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--pof-gold);
+  margin: 0 0 14px 0;
+}
+.pof-founder__body h2{
+  font-family: "Poppins", sans-serif;
+  font-size: clamp(28px, 3.4vw, 40px);
+  font-weight: 600;
+  color: var(--pof-ivory);
+  margin: 0 0 18px 0;
+  line-height: 1.2;
+}
+.pof-founder__body p{
+  font-family: "Figtree", sans-serif;
+  font-size: 16px;
+  line-height: 1.7;
+  color: var(--pof-ivory-dim);
+  margin: 0 0 16px 0;
+  max-width: 56ch;
+}
+.pof-founder__facts{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 26px;
+}
+.pof-founder__fact{
+  font-family: var(--pof-mono);
+  font-size: 12.5px;
+  color: var(--pof-gold-soft);
+  border: 1px solid var(--pof-panel-line);
+  background: var(--pof-panel);
+  border-radius: var(--pof-radius-pill);
+  padding: var(--pof-space-1) var(--pof-space-2);
+}
+@media (max-width: 900px){
+  .pof-founder{ grid-template-columns: 1fr; text-align: left; }
+  .pof-founder__portrait{ max-width: 340px; }
+}
+
+/* =========================================================================
+   9. Testimonial carousel (self-contained, autoplay-driven)
+   ========================================================================= */
+.pof-testimonials{
+  position: relative;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 8px 64px 56px;
+}
+.pof-testimonials__track{
+  position: relative;
+  min-height: 340px;
+}
+.pof-testimonial-slide{
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  opacity: 0;
+  transform: translateY(12px);
+  pointer-events: none;
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.pof-testimonial-slide.is-active{
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+  position: relative;
+}
+.pof-testimonial-slide__img{
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--pof-gold);
+  margin-bottom: 22px;
+}
+.pof-testimonial-slide__text{
+  font-family: "Figtree", sans-serif;
+  font-size: 17px;
+  line-height: 1.7;
+  color: var(--pof-ivory);
+  font-style: italic;
+  margin: 0 0 18px 0;
+  max-width: 56ch;
+}
+.pof-testimonial-slide__name{
+  font-family: "Poppins", sans-serif;
+  font-weight: 600;
+  font-size: 16px;
+  color: var(--pof-gold);
+  margin: 0;
+}
+.pof-testimonial-slide__title{
+  font-family: var(--pof-mono);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  color: var(--pof-ivory-dim);
+  margin: 4px 0 0 0;
+}
+.pof-testimonials__nav{
+  position: absolute;
+  top: 45%;
+  transform: translateY(-50%);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--pof-panel-line);
+  background: var(--pof-panel);
+  color: var(--pof-gold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+.pof-testimonials__nav:hover{
+  background: var(--pof-gold);
+  color: var(--pof-canvas);
+  transform: translateY(-50%) scale(1.06);
+}
+.pof-testimonials__nav--prev{ left: 0; }
+.pof-testimonials__nav--next{ right: 0; }
+.pof-testimonials__dots{
+  position: absolute;
+  bottom: 8px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+.pof-testimonials__dots button{
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: none;
+  background: var(--pof-panel-line);
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+.pof-testimonials__dots button.is-active{
+  background: var(--pof-gold);
+  transform: scale(1.25);
+}
+
+@media (max-width: 600px){
+  .pof-testimonials{ padding: 8px 48px 48px; }
+  .pof-testimonial-slide__text{ font-size: 15px; }
+  .pof-testimonials__nav{ width: 34px; height: 34px; }
+}
